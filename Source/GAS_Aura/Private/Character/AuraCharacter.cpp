@@ -3,8 +3,9 @@
 
 #include "Character/AuraCharacter.h"
 
-#include "AbilitySystemComponent.h"
+#include "AbilitySystem/AuraAbilitySystemComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
+#include "Player/AuraPlayerState.h"
 
 AAuraCharacter::AAuraCharacter()
 {
@@ -20,7 +21,7 @@ AAuraCharacter::AAuraCharacter()
 
 void AAuraCharacter::InitAbilityActorInfo()
 {
-	AAuraCharacter* AuraPlayerState = GetPlayerState<AAuraCharacter>();
+	AAuraPlayerState* AuraPlayerState = GetPlayerState<AAuraPlayerState>();
 	check(AuraPlayerState);
 	AuraPlayerState->GetAbilitySystemComponent()->InitAbilityActorInfo(AuraPlayerState, this);
 	AbilitySystemComponent = AuraPlayerState->GetAbilitySystemComponent();
