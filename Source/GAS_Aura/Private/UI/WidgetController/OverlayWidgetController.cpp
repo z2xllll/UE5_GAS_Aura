@@ -32,6 +32,21 @@ void UOverlayWidgetController::BindCallbacksToDependencies()
 
 	AbilitySystemComponent->GetGameplayAttributeValueChangeDelegate(AuraAttributeSet->GetMaxManaAttribute()
 		).AddUObject(this, &UOverlayWidgetController::HandleMaxManaChanged);
+
+	Cast<UAuraAbilitySystemComponent>(AbilitySystemComponent)->EffectAssetTags.AddLambda(
+		[this](const FGameplayTagContainer& Tags)
+		{
+			for (const FGameplayTag& Tag : Tags)
+			{
+				FGameplayTag MessageTag = FGameplayTag::RequestGameplayTag("Message");
+				if (Tag.MatchesTag(MessageTag))
+				{
+					const FUIWidgetRow* UIWidgetRow =	GetDataTableRow<FUIWidgetRow>(MessageWidgetDataTable,Tag);
+					MessageWidgetRowDelegate.Broadcast(*UIWidgetRow);
+				}
+				
+			}
+		});
 }
 
 void UOverlayWidgetController::HandleHealthChanged(const FOnAttributeChangeData& Data) const

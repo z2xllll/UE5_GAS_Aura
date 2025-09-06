@@ -3,15 +3,35 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "GameplayTagContainer.h"
 #include "UI/WidgetController/AuraWidgetController.h"
 #include "OverlayWidgetController.generated.h"
 
-struct FOnAttributeChangeData;
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnHealthChanged, float, NewHealth);
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnMaxHealthChanged,float,NewMaxHealth);
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnManaChanged,float,NewMana);
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnMaxManaChanged,float,NewMaxMana);
 
+struct FOnAttributeChangeData;
+class UAuraUserWidget;
+
+USTRUCT(BlueprintType)
+struct FUIWidgetRow:public FTableRowBase
+{
+	GENERATED_BODY()
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly)
+	FGameplayTag MessageTag = FGameplayTag::EmptyTag;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadOnly)
+	FText MessageText = FText();
+	
+	UPROPERTY(EditAnywhere, BlueprintReadOnly)
+	TSubclassOf<UAuraUserWidget> MessageWidgetClass = nullptr;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadOnly)
+	TObjectPtr<UTexture2D> Image = nullptr;
+};
+
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnAttributeChanged, float, NewValue);
+
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FMessageWidgetRowDelegate,FUIWidgetRow,MessageWidgetRow);
 /**
  * 
  */
@@ -25,21 +45,38 @@ public:
 	virtual void BindCallbacksToDependencies() override;
 	
 	UPROPERTY(BlueprintAssignable,Category = "GAS | Attributes")
-	FOnHealthChanged OnHealthChanged;
+	FOnAttributeChanged OnHealthChanged;
 	
 	UPROPERTY(BlueprintAssignable,Category = "GAS | Attributes")
-	FOnMaxHealthChanged OnMaxHealthChanged;
+	FOnAttributeChanged OnMaxHealthChanged;
 
 	UPROPERTY(BlueprintAssignable,Category = "GAS | Attributes")
-	FOnManaChanged OnManaChanged;
+	FOnAttributeChanged OnManaChanged;
 
 	UPROPERTY(BLueprintAssignable,Category = "GAS | Attributes")
-	FOnMaxManaChanged OnMaxManaChanged;	
+	FOnAttributeChanged OnMaxManaChanged;
+
+	UPROPERTY(BLueprintAssignable,Category = "GAS | Messages")
+	FMessageWidgetRowDelegate MessageWidgetRowDelegate;
 
 protected:
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly,Category = "WidgetData")
+	TObjectPtr<UDataTable> MessageWidgetDataTable;
+	
 	void HandleHealthChanged(const FOnAttributeChangeData& Data) const;
 	void HandleMaxHealthChanged(const FOnAttributeChangeData& Data) const;
 	void HandleManaChanged(const FOnAttributeChangeData& Data) const;
 	void HandleMaxManaChanged(const FOnAttributeChangeData& Data) const;
+
+	template <typename T>
+	T* GetDataTableRow(TObjectPtr<UDataTable> DataTable,const FGameplayTag& Tag);
 	
 };
+
+template <typename T>
+T* UOverlayWidgetController::GetDataTableRow(TObjectPtr<UDataTable> DataTable, const FGameplayTag& Tag)
+{
+	return DataTable ? DataTable->FindRow<T>(Tag.GetTagName(),TEXT("")) : nullptr;
+}
+
